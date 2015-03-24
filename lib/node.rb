@@ -1,10 +1,13 @@
 class Node
 
-  attr_accessor :pr_occur, :adj_list
+  attr_accessor :pr_one, :adj_list, :pr_zero, :is_root, :parent
 
-  def initialize
-    @pr_occur = rand
+  def initialize (root = false, parent = nil)
+    @pr_one   = rand
+    @pr_zero  = 1 - @pr_one
     @adj_list = [] # List of all edges coming from this node
+    @is_root  = root
+    @parent   = parent
   end
 
   def add_to_adj_list (edge)
@@ -19,6 +22,10 @@ class Node
     @adj_list.map { |edge|
       edge.weight = -edge.weight
     }
+  end
+
+  def root?
+    @is_root
   end
 
 end

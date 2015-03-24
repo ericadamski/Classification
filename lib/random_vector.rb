@@ -14,8 +14,4 @@ class RandomVector
     end
   end
 
-  def get_probabilities
-    @probabilities
-  end
-
 end

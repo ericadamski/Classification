@@ -6,11 +6,11 @@ require 'union_find'
 
 class Tree
 
-  attr_accessor :features, :tree, :type
+  attr_accessor :features, :decision_tree, :type
 
   def initialize (name = 'Class')
     @features = [] #size of ten always and values are binary
-    @tree = BinaryTree.new
+    @decision_tree = BinaryTree.new
     @type = name
     generate
   end
@@ -25,21 +25,23 @@ class Tree
 
   def generate
     #generate 10 nodes
-    for i in [1..10] do
-      @features.push Node.new
+    for i in 1..10 do
+      if i == 1
+        @features.push Node.new
+      else
+        @features.push Node.new(false, @features.sample)
+      end
     end
 
     #create undirected edges between all of them
-    copy = @features
+    #copy = @features
 
-    while not copy.empty?
-      first = copy.pop
-      for node in copy do
-        first.add_to_adj_list Edge.new(first,
-          node,
-          calculateWeight(first, node))
-      end
-    end
+    #while not copy.empty?
+    #  first = copy.pop
+    #  for node in copy do
+    #    first.add_to_adj_list Edge.new(first, node, 0)
+    #  end
+    #end
   end
 
   def get_maximum_spanning_tree
@@ -48,8 +50,8 @@ class Tree
     mst = kruskal
     #add nodes of mst into tree
     mst.each { |edge|
-      @tree.add edge.from
-      @tree.add edge.to
+      @decision_tree.add edge.from
+      @decision_tree.add edge.to
     }
   end
 
@@ -67,10 +69,7 @@ class Tree
     mst.map { |edge| edge.weight = -edge.weight }
   end
 
-  def calculateWeight (head, tail)
-    sum = 0
-
-    # pr(x,y) = pr(y) * pr(x|y)
+  def calculateWeight (from, to)
 
   end
 end

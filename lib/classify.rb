@@ -1,6 +1,6 @@
 class Classify
 
-  attr_accessor :trainning_data, :samples, :testing_data
+  attr_accessor :trainning_data, :samples, :testing_data, :classifing_vector
 
   def initialize (samples)
     @samples = samples
@@ -20,15 +20,40 @@ class Classify
       @testing_data[i] = tmp_test
       @samples.concat tmp_test
     end
+
+    train
   end
 
-  def independent_bayesian_classification
+  def train
+    result = Array.new(10,0)
+    for sample in trainning_data do
+      for i in 0..sample[1].first.size-1 do
+        for vector in sample[1] do
+          result[i] += vector[i]
+        end
+        result[i] = result[i].to_f/sample[1].size
+      end
+    end
+    @classifing_vector = result
   end
 
-  def dependent_bayesian_classification
+  def independent_bayesian_classification (vector)
+    #if 1 take 1-p other wise take p and product of them
+    conf = 1
+    for i in 0..vector.size - 1 do
+      if vector[i] == 1
+        conf *= 1 - @classifing_vector[i]
+      else
+        conf *= @classifing_vector[i]
+      end
+    end
+    conf
   end
 
-  def decision_tree_classification
+  def dependent_bayesian_classification (vector)
   end
-  
+
+  def decision_tree_classification (vector)
+  end
+
 end

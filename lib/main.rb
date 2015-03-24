@@ -26,10 +26,23 @@ end
 
 # classify using independence, bayesian classification
 for i in 0..3 do
-  Classify.new samples["#{i}"][:samples]
+  class1 = Classify.new samples["#{i}"][:samples]
+  #puts "Real : #{classes[i].probabilities}"
+  #puts "Clas : #{class1.classifing_vector}"
+  #puts class1.testing_data[0].sample
+  #cputs class1.independent_bayesian_classification(class1.testing_data[0].sample)
 end
 
-#generate random tree, with random variables, train on 2000 samples create fully
-#connected graph, do MST, estimate the original probabilities
+#generate random tree, with random variables, train on 2000 samples
+trees = []
 
-##puts RandomDependencyTree.new
+4.times do
+  trees.push Tree.new
+end
+
+tree_samples = Hash.new
+
+for i in 0..3 do
+  tree_samples[:"#{i}"] = { :tree => trees[i],
+    :samples => generator.generate_samples_from_tree(trees[i].features) }
+end

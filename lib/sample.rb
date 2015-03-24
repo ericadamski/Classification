@@ -22,9 +22,25 @@ class Sample
   end
 
   def generate_samples_from_tree (tree)
+    #tree is the features list from the tree structure
     samples = []
-    for i in [1..@size] do
+    @size.times do
+      val = rand
+      result = Hash.new
+      for node in tree do
+        if result.empty?
+          result[:"#{node}"] = (node.pr_one <= val ? 0 : 1)
+        else
+          prev_val = result[:"#{node.parent}"]
 
+          if prev_val == 1
+            result[:"#{node}"] = (node.pr_one <= val ? 0 : 1)
+          else
+            result[:"#{node}"] = (node.pr_zero <= val ? 0 : 1)
+          end
+        end
+      end
+      samples.push result.values
     end
     samples
   end
