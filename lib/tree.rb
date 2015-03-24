@@ -47,7 +47,10 @@ class Tree
     #negate all the weights, run kruskals' algo
     mst = kruskal
     #add nodes of mst into tree
-    mst.each {|value| @tree.add(value)}
+    mst.each { |edge|
+      @tree.add edge.from
+      @tree.add edge.to
+    }
   end
 
   def kruskal
@@ -56,8 +59,8 @@ class Tree
     union_find = UnionFind.new(@features)
     while edges.any? && mst.size <= @features.size
       edge = edges.shift
-      if !union_find.connected?(edge.from, edge.to)
-        union_find.union(edge.from, edge.to)
+      if !union_find.connected? edge.from, edge.to
+        union_find.union edge.from, edge.to
         mst << edge
       end
     end
