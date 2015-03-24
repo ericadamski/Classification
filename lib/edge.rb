@@ -1,11 +1,11 @@
 class Edge
 
-  attr_accessor :weight, :head, :tail
+  attr_accessor :weight, :from, :to
 
-  def initialize (head, tail, weight)
+  def initialize (from, to, weight)
     @weight = weight
-    @tail = tail
-    @head = head
+    @from = from
+    @to = to
   end
 
 end

@@ -3,45 +3,33 @@ $: << File.expand_path(File.dirname(__FILE__))
 require 'binarytree'
 require 'binarytreedrawer'
 require 'web_draw_binary_tree_controller'
-require 'random_dependency_tree'
+require 'tree'
+require 'random_vector'
+require 'sample'
+require 'classify'
 
-classes = ['OR', 'AND', 'XOR', "NAND"]
+generator = Sample.new
 
-def get_true_false (val)
-  (val == 0) ? true : false
+classes = []
+#generate 4 random vectors, each dimension 10
+4.times do
+  classes.push RandomVector.new
 end
 
-def get_probability (_class)
-  pr = lambda { |a, b| puts "a : #{a}, b : #{b}"}
+#generate 2000 samples
+samples = Hash.new # classification vector and samples
 
-  case _class
-    when 'OR'
-      pr = lambda { |a, b|
-        _a = get_true_false a
-        _b = get_true_false b
-        return (_a or _b)
-      }
-    when 'AND'
-      pr = lambda { |a, b|
-        _a = get_true_false a
-        _b = get_true_false b
-        return (_a and _b)
-      }
-    when 'XOR'
-      pr = lambda { |a, b|
-        _a = get_true_false a
-        _b = get_true_false b
-        return (_a ^ _b)
-      }
-    when 'NAND'
-      pr = lambda { |a, b|
-        _a = get_true_false a
-        _b = get_true_false b
-        return (not (_a and _b))
-      }
-  end
-
-  return pr
+for i in 0..3 do
+  samples["#{i}"] = { :vector => classes[i],
+    :samples => generator.generate_samples(classes[i].probabilities) }
 end
 
-puts RandomDependencyTree.new.features
+# classify using independence, bayesian classification
+for i in 0..3 do
+  Classify.new samples["#{i}"][:samples]
+end
+
+#generate random tree, with random variables, train on 2000 samples create fully
+#connected graph, do MST, estimate the original probabilities
+
+##puts RandomDependencyTree.new

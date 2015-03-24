@@ -11,4 +11,14 @@ class Node
     @adj_list.push edge
   end
 
+  def get_sorted_edges
+    @adj_list.sort_by { |edge| edge.weight }
+  end
+
+  def get_inverted_edge_weights
+    @adj_list.map { |edge|
+      edge.weight = -edge.weight
+    }
+  end
+
 end
