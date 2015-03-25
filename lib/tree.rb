@@ -1,5 +1,3 @@
-require 'binarytree'
-require 'binarytreedrawer'
 require 'node'
 require 'edge'
 require 'union_find'
@@ -10,7 +8,6 @@ class Tree
 
   def initialize (name = 'Class')
     @features = [] #size of ten always and values are binary
-    @decision_tree = BinaryTree.new
     @type = name
     generate
   end
@@ -39,7 +36,7 @@ class Tree
     #while not copy.empty?
     #  first = copy.pop
     #  for node in copy do
-    #    first.add_to_adj_list Edge.new(first, node, 0)
+    #    first.add_to_adj_list Edge.new(first, node)
     #  end
     #end
   end
@@ -48,16 +45,15 @@ class Tree
     #create the maximum spaning tree and store it in @tree
     #negate all the weights, run kruskals' algo
     mst = kruskal
-    #add nodes of mst into tree
-    mst.each { |edge|
-      @decision_tree.add edge.from
-      @decision_tree.add edge.to
-    }
+    #puts puts "MST : #{mst}"
   end
 
   def kruskal
     mst = []
-    edges = get_all_edges.map { |edge| edge.weight = -edge.weight }
+    edges = get_all_edges.map { |edge|
+      edge.weight = -edge.weight
+      edge
+    }
     union_find = UnionFind.new(@features)
     while edges.any? && mst.size <= @features.size
       edge = edges.shift
@@ -66,7 +62,10 @@ class Tree
         mst << edge
       end
     end
-    mst.map { |edge| edge.weight = -edge.weight }
+    mst.map { |edge|
+      edge.weight = -edge.weight
+      edge
+    }
   end
 
   def calculateWeight (from, to)

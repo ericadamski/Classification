@@ -1,8 +1,5 @@
 #!/usr/bin/env ruby
 $: << File.expand_path(File.dirname(__FILE__))
-require 'binarytree'
-require 'binarytreedrawer'
-require 'web_draw_binary_tree_controller'
 require 'tree'
 require 'random_vector'
 require 'sample'
@@ -30,7 +27,7 @@ for i in 0..3 do
   #puts "Real : #{classes[i].probabilities}"
   #puts "Clas : #{class1.classifing_vector}"
   #puts class1.testing_data[0].sample
-  #cputs class1.independent_bayesian_classification(class1.testing_data[0].sample)
+  #puts class1.independent_bayesian_classification(class1.testing_data[0].sample)
 end
 
 #generate random tree, with random variables, train on 2000 samples
@@ -43,6 +40,8 @@ end
 tree_samples = Hash.new
 
 for i in 0..3 do
-  tree_samples[:"#{i}"] = { :tree => trees[i],
+  tree_samples["#{i}"] = { :tree => trees[i],
     :samples => generator.generate_samples_from_tree(trees[i].features) }
 end
+
+(Classify.new tree_samples["0"][:samples]).infer_dependence_tree
