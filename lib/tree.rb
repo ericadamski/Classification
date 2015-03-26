@@ -1,6 +1,7 @@
 require 'node'
 require 'edge'
 require 'union_find'
+require 'graphviz'
 
 class Tree
 
@@ -20,13 +21,33 @@ class Tree
     edges.flatten
   end
 
+  def output (file = "/../output/#{@name}#{rand}.png")
+    edges = get_all_edges
+
+    for node in @features do
+      edges.push Edge.new(node, node.parent) unless node.parent.nil?
+    end if edges.empty?
+
+    g = GraphViz.new( :G, :type => :graph )
+
+    @features.each { |node|
+      g.add_node node.id.to_s
+    }
+
+    edges.each { |edge|
+      g.add_edge edge.from.id.to_s, edge.to.id.to_s
+    }
+
+    g.output :png => (File.expand_path(File.dirname(__FILE__)) + file)
+  end
+
   def generate
     #generate 10 nodes
     for i in 1..10 do
       if i == 1
-        @features.push Node.new
+        @features.push Node.new(i)
       else
-        @features.push Node.new(false, @features.sample)
+        @features.push Node.new(i, false, @features.sample)
       end
     end
 
@@ -45,7 +66,13 @@ class Tree
     #create the maximum spaning tree and store it in @tree
     #negate all the weights, run kruskals' algo
     mst = kruskal
+
+    for node in @features do
+      node.adj_list.select! { |edge| mst.include? edge }
+    end
+
     #puts puts "MST : #{mst}"
+    mst
   end
 
   def kruskal
@@ -53,7 +80,7 @@ class Tree
     edges = get_all_edges.map { |edge|
       edge.weight = -edge.weight
       edge
-    }
+    }.sort_by { |edge| edge.weight }
     union_find = UnionFind.new(@features)
     while edges.any? && mst.size <= @features.size
       edge = edges.shift

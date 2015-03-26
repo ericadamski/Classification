@@ -1,13 +1,19 @@
 class Node
 
-  attr_accessor :pr_one, :adj_list, :pr_zero, :is_root, :parent
+  attr_accessor :pr_one, :adj_list, :pr_zero, :is_root, :parent, :id
 
-  def initialize (root = false, parent = nil)
+  def initialize (id, root = false, parent = nil)
     @pr_one   = rand
     @pr_zero  = 1 - @pr_one
     @adj_list = [] # List of all edges coming from this node
     @is_root  = root
     @parent   = parent
+    @id       = id
+  end
+
+  def children
+    me = self
+    @adj_list.select { |edge| edge.from == me }
   end
 
   def add_to_adj_list (edge)

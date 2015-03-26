@@ -44,4 +44,5 @@ for i in 0..3 do
     :samples => generator.generate_samples_from_tree(trees[i].features) }
 end
 
+trees[0].output '/../output/proper.png'
 (Classify.new tree_samples["0"][:samples]).infer_dependence_tree

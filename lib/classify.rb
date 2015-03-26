@@ -25,8 +25,6 @@ class Classify
       @testing_data[i] = tmp_test
       @samples.concat tmp_test
     end
-
-    train
   end
 
   def train
@@ -40,6 +38,12 @@ class Classify
       end
     end
     @classifing_vector = result
+  end
+
+  def train_dependent
+    # count all the ones in the first position
+    # count all the ones in the first and second position
+    # count all the ones in the first and third position
   end
 
   def infer_dependence_tree
@@ -64,42 +68,27 @@ class Classify
       x += 1
     end
 
-    g = GraphViz.new( :G, :type => :graph )
-
-    tree.features.each { |node|
-      g.add_nodes node.to_s
-    }
-
-    tree.get_all_edges.each { |edge|
-      g.add_edges edge.to.to_s, edge.from.to_s
-    }
-
-    g.output :png => "#{OUTPUT_DIR}before_hello_world.png"
-
     mst = tree.get_maximum_spanning_tree
 
     mst_vertices = (mst.map { |edge| edge.from } +
       mst.map { |edge| edge.to }).uniq
 
-    #parent = ( mst_vertices - (mst.map { |edge| edge.from } -
-    #  mst.map { |edge| edge.to })).first
+    tree.output '/../output/infered.png'
 
-    #parent.is_root = true
-    #parent.parent  = nil
+    #g = GraphViz.new( :G, :type => :graph )
 
-    g = GraphViz.new( :G, :type => :graph )
+    #mst_vertices.each { |node|
+    #  g.add_node node.to_s
+    #}
 
-    mst_vertices.each { |node|
-      g.add_nodes node.to_s
-    }
+    #mst.each { |edge|
+    #  to = edge.to.to_s
+    #  from = edge.from.to_s
 
-    mst.each { |edge|
-      g.add_edges edge.to.to_s, edge.from.to_s
-    }
+    #  g.add_edges from, to
+    #}
 
-    g.output :png => "#{OUTPUT_DIR}hello_world.png"
-
-    #puts "#{parent}"
+    #g.output :png => "#{OUTPUT_DIR}infered.png"
   end
 
   def calculate_weight (x, y)
