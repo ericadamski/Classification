@@ -11,9 +11,9 @@ class Sample
   def generate_samples (probabilities)
     samples = []
     @size.times do
-      val = rand
       result = []
       for pr in probabilities do
+        val = rand
         result.push(pr <= val ? 0 : 1)
       end
       samples.push result
@@ -25,9 +25,9 @@ class Sample
     #tree is the features list from the tree structure
     samples = []
     @size.times do
-      val = rand
       result = Hash.new
       for node in tree do
+        val = rand
         if result.empty?
           result[:"#{node}"] = (node.pr_one <= val ? 0 : 1)
         else

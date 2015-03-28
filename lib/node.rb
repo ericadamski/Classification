@@ -4,7 +4,7 @@ class Node
 
   def initialize (id, root = false, parent = nil)
     @pr_one   = rand
-    @pr_zero  = 1 - @pr_one
+    @pr_zero  = rand
     @adj_list = [] # List of all edges coming from this node
     @is_root  = root
     @parent   = parent
@@ -13,7 +13,7 @@ class Node
 
   def children
     me = self
-    @adj_list.select { |edge| edge.from == me }
+    @adj_list.select { |edge| edge.from == me }.map { |edge| edge.to }
   end
 
   def add_to_adj_list (edge)

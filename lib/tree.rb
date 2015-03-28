@@ -21,7 +21,7 @@ class Tree
     edges.flatten
   end
 
-  def output (file = "/../output/#{@name}#{rand}.png")
+  def output (file = "/../output/#{@type}#{rand}.png")
     edges = get_all_edges
 
     for node in @features do
@@ -35,7 +35,7 @@ class Tree
     }
 
     edges.each { |edge|
-      g.add_edge edge.from.id.to_s, edge.to.id.to_s
+      g.add_edge edge.to.id.to_s, edge.from.id.to_s
     }
 
     g.output :png => (File.expand_path(File.dirname(__FILE__)) + file)
@@ -50,28 +50,16 @@ class Tree
         @features.push Node.new(i, false, @features.sample)
       end
     end
-
-    #create undirected edges between all of them
-    #copy = @features
-
-    #while not copy.empty?
-    #  first = copy.pop
-    #  for node in copy do
-    #    first.add_to_adj_list Edge.new(first, node)
-    #  end
-    #end
   end
 
   def get_maximum_spanning_tree
-    #create the maximum spaning tree and store it in @tree
-    #negate all the weights, run kruskals' algo
+    #create the maximum spaning tree
+    #  negate all the weights, run kruskals' algo
     mst = kruskal
 
     for node in @features do
       node.adj_list.select! { |edge| mst.include? edge }
     end
-
-    #puts puts "MST : #{mst}"
     mst
   end
 
@@ -93,9 +81,5 @@ class Tree
       edge.weight = -edge.weight
       edge
     }
-  end
-
-  def calculateWeight (from, to)
-
   end
 end
