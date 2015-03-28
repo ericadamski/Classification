@@ -4,6 +4,7 @@ require 'tree'
 require 'random_vector'
 require 'sample'
 require 'classify'
+require 'real_data'
 
 generator = Sample.new
 
@@ -84,3 +85,5 @@ for i in 0..3 do
   puts "Class number #{i} : "+
     "#{tree_samples["#{i}"][:classifier].dependent_bayesian_classification(sample)}"
 end
+
+puts DataSets::get 'heart_disease'

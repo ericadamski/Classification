@@ -185,9 +185,4 @@ class Classify
     end
     conf
   end
-
-  def decision_tree_classification (vector)
-    #this is from the tree
-  end
-
 end
