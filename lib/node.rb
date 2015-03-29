@@ -16,7 +16,7 @@ class Node
     @adj_list.select { |edge| edge.from == me }.map { |edge| edge.to }
   end
 
-  def add_to_adj_list (edge)
+  def add_edge (edge)
     @adj_list.push edge
   end
 

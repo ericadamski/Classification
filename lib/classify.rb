@@ -1,4 +1,5 @@
 require 'tree'
+require 'node'
 require 'graphviz'
 
 OUTPUT_DIR = File.expand_path(File.dirname(__FILE__))+'/../output/'
@@ -93,7 +94,7 @@ class Classify
     while copy.any?
       first = copy.pop
       for node in copy do
-        first.add_to_adj_list Edge.new(first,
+        first.add_edge Edge.new(first,
           node,
           calculate_weight(_class, first.id - 1, node.id - 1))
       end
@@ -198,6 +199,109 @@ class Classify
       end
     end
     results
+  end
+
+  def entropy (_class, set)
+    # count positives = 1 and negatives = 0
+    # - p+ log p+ - p- log p-
+    # p+ = pos/total, p- = neg/total
+    pos = set.select { |vec| vec.last == _class[:type] }.size
+    neg = set.select { |vec| vec.last != _class[:type] }.size
+    total = set.size
+
+    if pos > 0
+      val = -((pos.to_f/total)*Math.log(pos.to_f/total, 2) -
+        (neg.to_f/total)*Math.log(neg.to_f/total, 2))
+    elsif neg > 0
+      val = -(neg.to_f/total)*Math.log(neg.to_f/total, 2)
+    else
+      val = 0
+    end
+    puts "entropy = #{val.to_f}"
+    val
+  end
+
+  def gain (_class, set, attribute)
+    # entropy(set) - for every value attribute can take ( in our case 0-1 )
+    # do Sv = { s in Set | the attribute in (set s) has value v }
+    # (Sv/S * entropy(Sv))
+    set_entropy = entropy _class, set
+
+    zero_set = set.select { |vec| vec[attribute] == 0 }
+    one_set  = set.select { |vec| vec[attribute] == 1 }
+
+    zero_set_entropy = entropy _class, zero_set
+    one_set_entropy  = entropy _class, one_set
+
+    # in general for binary values :
+    # gain(S,A) = entropy(s) - ((|S0/S| * entropy(S0)) + (|S1/S| * entropy(S1)))
+    g = set_entropy - ( ((zero_set.size/set.size) * zero_set_entropy) +
+      ((one_set.size/set.size) * one_set_entropy) )
+
+    puts "Gain : #{g.to_f}"
+    g.to_f
+  end
+
+  def create_decision_tree (_class, set)
+    # { attribute, gain }
+    feature_count = set.first().size - 2 # - 1 to exclude the classification
+    dt = Tree.new 0, false
+
+    attributes = []
+    for i in 0..feature_count do
+      attributes.push ({ :index => i, :gain => 0 })
+    end
+
+    nodes = get_dtree _class, set, attributes, nil
+
+    for node in nodes do
+      dt.add_node node
+    end
+
+    dt.output "/../output/dt_#{_class[:type].to_s}.png"
+    
+    dt
+  end
+
+  def get_dtree (_class, set, attributes, parent)
+    nodes = []
+
+    if attributes.empty?
+      # if totally pos YES otherwise NO
+      pos = set.select { |vec| vec.last == _class[:type] }.size
+      neg = set.select { |vec| vec.last != _class[:type] }.size
+
+      if pos == 0
+        nodes.push Node.new 'YES', false, parent
+      else
+        nodes.push Node.new 'NO', false, parent
+      end
+    else
+      for attribute in attributes do
+        attribute[:gain] = gain(_class, set, attribute[:index])
+      end
+
+      max = attributes.max_by { |feature| feature[:gain] }
+
+      attributes.delete max
+      #create a node and an edge to the parent
+      max_node = Node.new max[:index], (parent.nil? ? true : false) , parent
+
+      nodes.push max_node
+
+      zero = get_dtree(_class,
+        set.select { |vec| vec[max[:index]] == 0 },
+        attributes,
+        max_node)
+      one  = get_dtree(_class,
+        set.select { |vec| vec[max[:index]] == 1},
+        attributes,
+        max_node)
+
+      nodes.push zero
+      nodes.push one
+    end
+    nodes.flatten
   end
 
   def independent_bayesian_classification (_class, vector)

@@ -40,7 +40,7 @@ class DataSets
         s = data.first().size - 1
         ret_data = binaryify data, s
         for i in 0..data.size - 1 do
-          ret_data[i][0] = data[i].first
+          ret_data[i].push data[i].first
         end
         return ret_data
       when 'heart_disease'
@@ -65,7 +65,7 @@ class DataSets
         s = data.first().size - 1
         ret_data = binaryify data, s
         for i in 0..data.size - 1 do
-          ret_data[i][s] = data[i].last
+          ret_data[i][s] = data[i].last().chomp
         end
         return ret_data
     end

@@ -7,10 +7,10 @@ class Tree
 
   attr_accessor :features, :decision_tree, :type
 
-  def initialize (feature_count = 10, name = 'Class')
+  def initialize (feature_count = 10, random = true, name = 'Class')
     @features = [] #size of feature_count and values are binary
     @type = name
-    generate feature_count
+    generate feature_count if random
   end
 
   def get_all_edges
@@ -19,6 +19,16 @@ class Tree
       edges.push( nodes.adj_list )
     end
     edges.flatten
+  end
+
+  def add_node (node)
+    @features.push node
+  end
+
+  def create_edge (from, to)
+    edge = Edge.new from, to
+    from.add_edge edge
+    to.add_edge edge
   end
 
   def output (file = "/../output/#{@type}#{rand}.png")

@@ -46,14 +46,23 @@ dependent_classifyer = Classify.new tree_samples
 
 puts dependent_classifyer.get_accuracy true
 
-iris_data_set = DataSets::get 'iris'
-wine_data_set = DataSets::get 'wine'
+iris_data_set  = DataSets::get 'iris'
+wine_data_set  = DataSets::get 'wine'
+heart_data_set = DataSets::get 'heart_disease'
 
-iris_class_types = iris_data_set.map { |vec| vec.last }.uniq
-wine_class_types = wine_data_set.map { |vec| vec.first}.uniq
+heart_class_types = heart_data_set.map { |vec| vec.last }.uniq
+iris_class_types  = iris_data_set.map  { |vec| vec.last }.uniq
+wine_class_types  = wine_data_set.map  { |vec| vec.last }.uniq
 
-wines = []
-iriss = []
+hearts = []
+wines  = []
+iriss  = []
+
+for type in heart_class_types do
+  hearts.push ({ :type => type, :samples =>
+    heart_data_set.select { |vec|
+      vec.last == type }.map { |vec| vec.take vec.size - 1 }})
+end
 
 for type in wine_class_types do
   wines.push ({ :type => type, :samples =>
@@ -67,8 +76,12 @@ for type in iris_class_types do
       vec.last == type }.map { |vec| vec.take vec.size - 1 } })
 end
 
-iris_classifier = Classify.new iriss
-wine_classifier = Classify.new wines
+iris_classifier  = Classify.new iriss
+wine_classifier  = Classify.new wines
+heart_classifier = Classify.new hearts
 
-puts wine_classifier.get_accuracy true
+#puts wine_classifier.get_accuracy true
 puts iris_classifier.get_accuracy true
+puts heart_classifier.get_accuracy true
+
+iris_classifier.create_decision_tree iriss.sample, iris_data_set
