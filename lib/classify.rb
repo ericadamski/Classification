@@ -5,44 +5,40 @@ OUTPUT_DIR = File.expand_path(File.dirname(__FILE__))+'/../output/'
 
 class Classify
 
-  attr_accessor :trainning_data,
-    :samples,
-    :testing_data,
-    :classifying_vector,
-    :classifying_tree,
+  attr_accessor :classes,
     :trainning_index
 
-  def initialize (samples, is_dt = false)
-    @samples = samples
-    @trainning_data = Hash.new
-    @testing_data = Hash.new
-    seperate_data
-    @trainning_index = rand(@trainning_data.size)
+  def initialize (classes)
+    @classes = classes #list
+    @classes.map { |c| seperate_data c }
+    @trainning_index = rand(8)
   end
 
-  def seperate_data
-    increment = @samples.size/8
+  def seperate_data (_class)
+    increment = _class[:samples].size/8
+    _class[:trainning_data] = [] if _class[:trainning_data].nil?
+    _class[:testing_data]   = [] if _class[:testing_data].nil?
     # drop the first part of the array, put that in testing data
     # put the left over in trainning
     # concat the dropped part on the end, repeat increment many times.
     for i in 0..7 do
-      tmp_test = @samples.slice! 0, increment
-      @trainning_data[i] = @samples
-      @testing_data[i] = tmp_test
-      @samples.concat tmp_test
+      tmp_test = _class[:samples].slice! 0, increment
+      _class[:trainning_data][i] = _class[:samples]
+      _class[:testing_data][i] = tmp_test
+      _class[:samples].concat tmp_test
     end
   end
 
-  def train (_in = @trainning_index)
+  def train (_in = @trainning_index, _class)
     result = Array.new(10,0)
     @trainning_index = _in
-    for i in 0..trainning_data[_in].first().size-1 do
-      result[i] = get_probability i
+    for i in 0.._class[:trainning_data][_in].first().size - 1 do
+      result[i] = get_probability i, _class
     end
-    @classifying_vector = result
+    _class[:classifying_vector] = result
   end
 
-  def train_dependent
+  def train_dependent (_class, tree)
     # get all the children of the current node in the DT
     # calculate the prs of all the children based on the according values given
     # by the parent
@@ -50,28 +46,26 @@ class Classify
     # start at the root, this way we can gaurentee that the parent will always
     # have a value associated
 
-    for node in @classifying_tree.features do
+    for node in tree.features do
       if node.parent.nil?
         # root
-        node.pr_one = get_probability(node.id - 1)
+        node.pr_one = get_probability(node.id - 1, _class)
       else
         child_zero = 0
         child_one  = 0
         x = node.parent.id - 1
         y = node.id - 1
-        for sample in trainning_data do
-          for vector in sample[1] do
-            if vector[x] == 0 and vector[y] == 0
-              child_zero  += 1 #0
-            elsif vector[x] == 1 and vector[y] == 0
-              child_one += 1 #0
-            end
+        for vector in _class[:trainning_data][@trainning_index] do
+          if vector[x] == 0 and vector[y] == 0
+            child_zero  += 1 #0
+          elsif vector[x] == 1 and vector[y] == 0
+            child_one += 1 #0
           end
-          child_zero = child_zero.to_f / sample[1].size
-          child_one  = child_one.to_f / sample[1].size
         end
-        node.pr_one  = child_one
-        node.pr_zero = child_zero
+        node.pr_one  =
+          child_zero.to_f / _class[:trainning_data][@trainning_index].size
+        node.pr_zero =
+          child_one.to_f / _class[:trainning_data][@trainning_index].size
       end
     end
   end
@@ -84,7 +78,7 @@ class Classify
     end
   end
 
-  def infer_dependence_tree
+  def infer_dependence_tree (_class)
     # take the first node.
     # let its position in the features vecture be denoted by 0
     # select the next node, its position is called 0 + 1
@@ -114,9 +108,9 @@ class Classify
 
     tree.output '/../output/infered.png'
 
-    @classifying_tree = tree
+    train_dependent _class, tree
 
-    train_dependent
+    _class[:dependence_tree] = tree
   end
 
   def calculate_weight (x, y)
@@ -142,40 +136,94 @@ class Classify
     (pxy * (Math.log(pxy/(px*py))))
   end
 
-  def get_probability (pos)
+  def get_probability (pos, _class)
     sum = 0
-    for vector in trainning_data[@trainning_index] do
+    for vector in _class[:trainning_data][@trainning_index] do
         sum += vector[pos]
     end
-    sum = sum.to_f / trainning_data[@trainning_index].size
+    sum = sum.to_f / _class[:trainning_data][@trainning_index].size
   end
 
-  def accuracy (_in = @trainning_index)
-    train _in
-    #puts "#{trainning_data[@trainning_index]}"
-    #puts "#{@classifying_vector}"
-    return lambda { |vector|
-      independent_bayesian_classification vector
-    }
+  def get_accuracy (_in = @trainning_index, dependent = false)
+    results = Hash.new
+    # Structure of Result
+    # => { class.id => { count, precent } }
+    if dependent
+      @classes.map { |c|
+        infer_dependence_tree c
+
+        results[c] = { :count => 0, :percent => 0.0 }
+      }
+
+      for _class in @classes do
+        test_set = _class[:testing_data][@trainning_index]
+        for vector in test_set do
+          highest = { :class => nil, :value => 0 }
+          for c in @classes do
+            val = dependent_bayesian_classification c, vector
+            if val > highest[:value]
+              highest[:class] = c
+              highest[:value] = val
+            end
+          end
+          if highest[:class] == _class
+            results[_class][:count] += 1
+          end
+        end
+        results[_class][:percent] =
+          (results[_class][:count].to_f / test_set.size) * 100
+      end
+    else #independent
+      index = 0
+      @classes.map { |c|
+        train @trainning_index, c
+
+        results[index] = { :count => 0, :percent => 0.0 }
+        index += 1
+      }
+
+      index = 0
+
+      for _class in @classes do
+        test_set = _class[:testing_data][@trainning_index]
+        for vector in test_set do
+          highest = { :class => nil, :value => 0 }
+          for c in @classes do
+            val = independent_bayesian_classification c, vector
+            if val > highest[:value]
+              highest[:class] = c
+              highest[:value] = val
+            end
+          end
+          if highest[:class] == _class
+            results[index][:count] += 1
+          end
+        end
+        results[index][:percent] =
+          (results[index][:count].to_f / test_set.size) * 100
+
+        index += 1
+      end
+    end
+    results
   end
 
-  def independent_bayesian_classification (vector)
+  def independent_bayesian_classification (_class, vector)
     #if 1 take 1-p other wise take p and product of them
     conf = 1.0
     for i in 0..vector.size - 1 do
       if vector[i] == 1
-        conf *= 1 - @classifying_vector[i]
+        conf *= 1 - _class[:classifying_vector][i]
       else
-        conf *= @classifying_vector[i]
+        conf *= _class[:classifying_vector][i]
       end
     end
-    conf
+    1 - conf
   end
 
-  def dependent_bayesian_classification (vector)
-    #this is from the tree ><
+  def dependent_bayesian_classification (_class, vector)
     conf = 1
-    for node in @classifying_tree.features do
+    for node in _class[:dependence_tree].features do
       if node.parent.nil?
         conf *= node.pr_one
       else
