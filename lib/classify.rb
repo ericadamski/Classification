@@ -95,7 +95,7 @@ class Classify
       for node in copy do
         first.add_to_adj_list Edge.new(first,
           node,
-          calculate_weight(first.id - 1, node.id - 1))
+          calculate_weight(_class, first.id - 1, node.id - 1))
       end
     end
 
@@ -113,26 +113,23 @@ class Classify
     _class[:dependence_tree] = tree
   end
 
-  def calculate_weight (x, y)
+  def calculate_weight (_class, x, y)
     # go through all the samples, only summing in positions x and y
     # puts "x : #{x}, y : #{y}"
     pxy, px, py = 0, 0, 0
 
-    size = trainning_data.first()[1].size
+    size = _class[:trainning_data][@trainning_index].size
 
-    for sample in trainning_data do
-      for vector in sample[1] do
-        px += vector[x]
-        py += vector[y]
-
-        if vector[x] == 1 and vector[y] == 1
-          pxy += 1
-        end
-      end
-      px  = px.to_f/size
-      py  = py.to_f/size
-      pxy = pxy.to_f/size
+    for vector in _class[:trainning_data][@trainning_index] do
+      px += vector[x]
+      py += vector[y]
+      pxy += 1 if vector[x] == 1 and vector[y] == 1
     end
+
+    px  = px.to_f/size
+    py  = py.to_f/size
+    pxy = pxy.to_f/size
+
     (pxy * (Math.log(pxy/(px*py))))
   end
 
@@ -144,16 +141,21 @@ class Classify
     sum = sum.to_f / _class[:trainning_data][@trainning_index].size
   end
 
-  def get_accuracy (_in = @trainning_index, dependent = false)
+  def get_accuracy (dependent = false)
     results = Hash.new
+
+    index = 0
     # Structure of Result
     # => { class.id => { count, precent } }
     if dependent
       @classes.map { |c|
         infer_dependence_tree c
 
-        results[c] = { :count => 0, :percent => 0.0 }
+        results[index] = { :count => 0, :percent => 0.0 }
+        index += 1
       }
+
+      index = 0
 
       for _class in @classes do
         test_set = _class[:testing_data][@trainning_index]
@@ -167,14 +169,15 @@ class Classify
             end
           end
           if highest[:class] == _class
-            results[_class][:count] += 1
+            results[index][:count] += 1
           end
         end
-        results[_class][:percent] =
-          (results[_class][:count].to_f / test_set.size) * 100
+        results[index][:percent] =
+          (results[index][:count].to_f / test_set.size) * 100
+
+        index += 1
       end
     else #independent
-      index = 0
       @classes.map { |c|
         train @trainning_index, c
 
@@ -231,6 +234,6 @@ class Classify
         conf *= node.pr_zero if vector[node.parent.id - 1] == 0
       end
     end
-    conf
+    1 - conf
   end
 end

@@ -35,23 +35,15 @@ trees = []
   trees.push Tree.new
 end
 
-tree_samples = Hash.new
+tree_samples = []
 
 for i in 0..3 do
-  trees[i].output "/../output/proper-#{i}.png"
-  sam = generator.generate_samples_from_tree(trees[i].features)
-  tree_samples["#{i}"] = { :tree => trees[i],
-    :samples => sam,
-    :classifier => Classify.new(sam) }
-  tree_samples["#{i}"][:classifier].infer_dependence_tree
+  tree_samples.push ({ :tree => trees[i],
+    :samples => generator.generate_samples_from_tree(trees[i].features) })
 end
 
-# take sample fro class 1
-sample = tree_samples["0"][:classifier].testing_data[0].sample
-# conf for each class return highest
-for i in 0..3 do
-  puts "Class number #{i} : "+
-    "#{tree_samples["#{i}"][:classifier].dependent_bayesian_classification(sample)}"
-end
+dependent_classifyer = Classify.new tree_samples
 
-puts DataSets::get 'heart_disease'
+puts dependent_classifyer.get_accuracy true
+
+#puts DataSets::get 'heart_disease'
