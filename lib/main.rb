@@ -18,7 +18,7 @@ end
 samples = [] # classification vector and samples
 
 for i in 0..3 do
-  samples.push ({ :vector => classes[i],
+  samples.push ({ :type => i, :vector => classes[i],
     :samples => generator.generate_samples(classes[i].probabilities) })
 end
 
@@ -38,7 +38,7 @@ end
 tree_samples = []
 
 for i in 0..3 do
-  tree_samples.push ({ :tree => trees[i],
+  tree_samples.push ({ :type => i, :tree => trees[i],
     :samples => generator.generate_samples_from_tree(trees[i].features) })
 end
 
@@ -46,4 +46,29 @@ dependent_classifyer = Classify.new tree_samples
 
 puts dependent_classifyer.get_accuracy true
 
-#puts DataSets::get 'heart_disease'
+iris_data_set = DataSets::get 'iris'
+wine_data_set = DataSets::get 'wine'
+
+iris_class_types = iris_data_set.map { |vec| vec.last }.uniq
+wine_class_types = wine_data_set.map { |vec| vec.first}.uniq
+
+wines = []
+iriss = []
+
+for type in wine_class_types do
+  wines.push ({ :type => type, :samples =>
+    wine_data_set.select { |vec|
+      vec.first == type }.map { |vec| vec.drop 1 } })
+end
+
+for type in iris_class_types do
+  iriss.push ({ :type => type, :samples =>
+    iris_data_set.select { |vec|
+      vec.last == type }.map { |vec| vec.take vec.size - 1 } })
+end
+
+iris_classifier = Classify.new iriss
+wine_classifier = Classify.new wines
+
+puts wine_classifier.get_accuracy true
+puts iris_classifier.get_accuracy true

@@ -13,7 +13,11 @@ class DataSets
             .each_line do |line|
           data.push line.split(',')
         end
-        return binaryify data, 3
+        ret_data = binaryify data, 3
+        for i in 0..data.size - 1 do
+          ret_data[i].push data[i].last().chomp
+        end
+        return ret_data
       when 'wine'
         # 0 - Class: 1-3
         # 1 - Alcohol
@@ -33,7 +37,12 @@ class DataSets
           "/../data/wine.csv").each_line do |line|
           data.push line.split(',')
         end
-        return binaryify data, data.first().size - 1
+        s = data.first().size - 1
+        ret_data = binaryify data, s
+        for i in 0..data.size - 1 do
+          ret_data[i][0] = data[i].first
+        end
+        return ret_data
       when 'heart_disease'
         # 0 - age
         # 1 - gender
@@ -53,7 +62,12 @@ class DataSets
           "/../data/heartDisease.csv").each_line do |line|
           data.push line.split(',')
         end
-        return binaryify data, data.first().size - 1
+        s = data.first().size - 1
+        ret_data = binaryify data, s
+        for i in 0..data.size - 1 do
+          ret_data[i][s] = data[i].last
+        end
+        return ret_data
     end
   end
 

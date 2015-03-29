@@ -7,10 +7,10 @@ class Tree
 
   attr_accessor :features, :decision_tree, :type
 
-  def initialize (name = 'Class')
-    @features = [] #size of ten always and values are binary
+  def initialize (feature_count = 10, name = 'Class')
+    @features = [] #size of feature_count and values are binary
     @type = name
-    generate
+    generate feature_count
   end
 
   def get_all_edges
@@ -41,9 +41,9 @@ class Tree
     g.output :png => (File.expand_path(File.dirname(__FILE__)) + file)
   end
 
-  def generate
-    #generate 10 nodes
-    for i in 1..10 do
+  def generate (fc)
+    #generate fc many nodes
+    for i in 1..fc do
       if i == 1
         @features.push Node.new(i)
       else

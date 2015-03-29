@@ -8,10 +8,10 @@ class Classify
   attr_accessor :classes,
     :trainning_index
 
-  def initialize (classes)
+  def initialize (classes, index = 8)
     @classes = classes #list
     @classes.map { |c| seperate_data c }
-    @trainning_index = rand(8)
+    @trainning_index = rand(index)
   end
 
   def seperate_data (_class)
@@ -84,7 +84,7 @@ class Classify
     # select the next node, its position is called 0 + 1
     # take count the occurences of 1's in both the 0th and 0 + 1th places
     #  to get p(x,y) individually, p(x) is count of 0 and p(y) is 0 + 1
-    tree = Tree.new
+    tree = Tree.new _class[:samples].first().size
 
     copy = tree.features.slice(0, tree.features.size)
 
@@ -106,7 +106,7 @@ class Classify
 
     set_parents mst, tree.features.first
 
-    tree.output '/../output/infered.png'
+    tree.output "/../output/infered_#{_class[:type].to_s}.png"
 
     train_dependent _class, tree
 
@@ -130,7 +130,8 @@ class Classify
     py  = py.to_f/size
     pxy = pxy.to_f/size
 
-    (pxy * (Math.log(pxy/(px*py))))
+    val = (pxy * (Math.log(pxy/(px*py))))
+    val.nan? ? -1200000 : val
   end
 
   def get_probability (pos, _class)
@@ -143,19 +144,14 @@ class Classify
 
   def get_accuracy (dependent = false)
     results = Hash.new
-
-    index = 0
     # Structure of Result
     # => { class.id => { count, precent } }
     if dependent
       @classes.map { |c|
         infer_dependence_tree c
 
-        results[index] = { :count => 0, :percent => 0.0 }
-        index += 1
+        results[c[:type]] = { :count => 0, :percent => 0.0 }
       }
-
-      index = 0
 
       for _class in @classes do
         test_set = _class[:testing_data][@trainning_index]
@@ -169,23 +165,18 @@ class Classify
             end
           end
           if highest[:class] == _class
-            results[index][:count] += 1
+            results[_class[:type]][:count] += 1
           end
         end
-        results[index][:percent] =
-          (results[index][:count].to_f / test_set.size) * 100
-
-        index += 1
+        results[_class[:type]][:percent] =
+          (results[_class[:type]][:count].to_f / test_set.size) * 100
       end
     else #independent
       @classes.map { |c|
         train @trainning_index, c
 
-        results[index] = { :count => 0, :percent => 0.0 }
-        index += 1
+        results[c[:type]] = { :count => 0, :percent => 0.0 }
       }
-
-      index = 0
 
       for _class in @classes do
         test_set = _class[:testing_data][@trainning_index]
@@ -199,13 +190,11 @@ class Classify
             end
           end
           if highest[:class] == _class
-            results[index][:count] += 1
+            results[_class[:type]][:count] += 1
           end
         end
-        results[index][:percent] =
-          (results[index][:count].to_f / test_set.size) * 100
-
-        index += 1
+        results[_class[:type]][:percent] =
+          (results[_class[:type]][:count].to_f / test_set.size) * 100
       end
     end
     results
