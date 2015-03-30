@@ -24,7 +24,7 @@ end
 
 independent_classifyer = Classify.new samples
 
-# classify using independent bayesian classification=
+#classify using independent bayesian classification=
 
 puts independent_classifyer.get_accuracy
 
@@ -95,3 +95,7 @@ end
 for i in 0..heart_class_types.size - 1
   heart_classifier.create_decision_tree hearts[i], heart_data_set
 end
+
+puts wine_classifier.get_accuracy 'DT'
+puts iris_classifier.get_accuracy 'DT'
+puts heart_classifier.get_accuracy 'DT'

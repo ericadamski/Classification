@@ -1,6 +1,13 @@
 class Node
 
-  attr_accessor :pr_one, :adj_list, :pr_zero, :is_root, :parent, :id
+  attr_accessor :pr_one,
+    :adj_list,
+    :pr_zero,
+    :is_root,
+    :parent,
+    :id,
+    :right_st,
+    :left_st
 
   def initialize (id, root = false, parent = nil)
     @pr_one   = rand
@@ -9,6 +16,14 @@ class Node
     @is_root  = root
     @parent   = parent
     @id       = id
+  end
+
+  def add_left (left)
+    @left_st = left
+  end
+
+  def add_right (right)
+    @right_st = right
   end
 
   def children

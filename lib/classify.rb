@@ -1,5 +1,6 @@
 require 'tree'
 require 'node'
+require 'json'
 require 'graphviz'
 
 OUTPUT_DIR = File.expand_path(File.dirname(__FILE__))+'/../output/'
@@ -142,11 +143,33 @@ class Classify
     results = Hash.new
     # Structure of Result
     # => { class.id => { count, precent } }
-    if dependent
+    if dependent.eql? 'DT'
+      @classes.map { |c|
+        results[c[:type]] = { :type => 'Decision Tree',
+          :count => 0,
+          :percent => 0.0 }
+      }
+
+      for _class in @classes do
+        test_set = _class[:testing_data][@trainning_index]
+        for vector in test_set do
+          for c in @classes do
+            val = decision_tree_classification c, vector
+            if val.eql? 'YES' and c == _class
+              results[_class[:type]][:count] += 1
+            end
+          end
+        end
+        results[_class[:type]][:percent] =
+          (results[_class[:type]][:count].to_f / test_set.size) * 100
+      end
+    elsif dependent
       @classes.map { |c|
         infer_dependence_tree c, size
 
-        results[c[:type]] = { :count => 0, :percent => 0.0 }
+        results[c[:type]] = { :type => 'Dependence Tree',
+          :count => 0,
+          :percent => 0.0 }
       }
 
       for _class in @classes do
@@ -171,7 +194,9 @@ class Classify
       @classes.map { |c|
         train @trainning_index, c
 
-        results[c[:type]] = { :count => 0, :percent => 0.0 }
+        results[c[:type]] = { :type => 'Independent',
+          :count => 0,
+          :percent => 0.0 }
       }
 
       for _class in @classes do
@@ -241,7 +266,7 @@ class Classify
   def create_decision_tree (_class, set)
     # { attribute, gain }
     feature_count = set.first().size - 2 # - 1 to exclude the classification
-    dt = Tree.new 0, false
+    dt = Tree.new nil, false
 
     attributes = []
     for i in 0..feature_count do
@@ -256,25 +281,31 @@ class Classify
 
     dt.output "/../output/dt_#{_class[:type].to_s}_#{rand}.png"
 
+    #puts "#{_class[:type]}"
+
+    _class[:dt] = dt
+
+    #puts "#{_class[:type]}"
+
     dt
   end
 
-  def get_dtree (_class, set, attributes, parent)
-    #return [] if _class.nil?
+  def get_dtree (_class, set, attributes, parent, subtree = nil)
     nodes = []
 
     if attributes.empty? or set.empty?
       # if totally pos YES otherwise NO
+      max_node = nil
       if set.empty?
-        nodes.push Node.new 'NO', false, parent
+        nodes.push (max_node = Node.new('NO', false, parent))
       else
         pos = set.select { |vec| vec.last == _class[:type] }.size
         neg = set.select { |vec| vec.last != _class[:type] }.size
 
         if pos == 0
-          nodes.push Node.new 'YES', false, parent
+          nodes.push (max_node = Node.new('YES', false, parent))
         else
-          nodes.push Node.new 'NO', false, parent
+          nodes.push (max_node = Node.new('NO', false, parent))
         end
       end
     else
@@ -286,22 +317,33 @@ class Classify
 
       attributes.delete max
       #create a node and an edge to the parent
-      max_node = Node.new max[:index], (parent.nil? ? true : false) , parent
-
-      nodes.push max_node
+      max_node = Node.new(max[:index], (parent.nil? ? true : false) , parent)
 
       zero = get_dtree(_class,
         set.select { |vec| vec[max[:index]] == 0 },
         attributes,
-        max_node)
+        max_node,
+        'right')
       one  = get_dtree(_class,
         set.select { |vec| vec[max[:index]] == 1},
         attributes,
-        max_node)
+        max_node,
+        'left')
 
+      nodes.push max_node
       nodes.push zero
       nodes.push one
     end
+
+    if not parent.nil?
+      case subtree
+        when 'left'
+          parent.left_st = max_node
+        when 'right'
+          parent.right_st = max_node
+      end
+    end
+
     nodes.flatten
   end
 
@@ -330,4 +372,23 @@ class Classify
     end
     1 - conf
   end
+
+  def decision_tree_classification (_class, vector)
+    # zero = right, one = left
+    #puts _class[:dt].features
+    current_node = _class[:dt].features.first
+    for i in 0..vector.size - 1 do
+      if current_node.id.eql? 'YES' or current_node.id.eql? 'NO'
+        return current_node.id
+      else
+        if vector[i] == 1
+          current_node = current_node.left_st
+        else
+          current_node = current_node.right_st
+        end
+      end
+    end
+    'NO'
+  end
+
 end
