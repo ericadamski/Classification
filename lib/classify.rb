@@ -31,10 +31,10 @@ class Classify
     end
   end
 
-  def train (_in = @trainning_index, _class)
-    result = Array.new(10,0)
+  def train (_in = @trainning_index, _class, size)
+    result = []
     @trainning_index = _in
-    for i in 0.._class[:trainning_data][_in].first().size - 1 do
+    for i in 0..size - 1 do
       result[i] = get_probability i, _class
     end
     _class[:classifying_vector] = result
@@ -192,7 +192,7 @@ class Classify
       end
     else #independent
       @classes.map { |c|
-        train @trainning_index, c
+        train @trainning_index, c, size
 
         results[c[:type]] = { :type => 'Independent',
           :count => 0,
@@ -204,7 +204,7 @@ class Classify
         for vector in test_set do
           highest = { :class => nil, :value => 0 }
           for c in @classes do
-            val = independent_bayesian_classification c, vector
+            val = independent_bayesian_classification c, vector, size
             if val > highest[:value]
               highest[:class] = c
               highest[:value] = val
@@ -347,10 +347,10 @@ class Classify
     nodes.flatten
   end
 
-  def independent_bayesian_classification (_class, vector)
+  def independent_bayesian_classification (_class, vector, size)
     #if 1 take 1-p other wise take p and product of them
     conf = 1.0
-    for i in 0..vector.size - 1 do
+    for i in 0..size - 1 do
       if vector[i] == 1
         conf *= 1 - _class[:classifying_vector][i]
       else
