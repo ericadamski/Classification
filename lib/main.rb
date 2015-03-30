@@ -67,7 +67,7 @@ end
 for type in wine_class_types do
   wines.push ({ :type => type, :samples =>
     wine_data_set.select { |vec|
-      vec.first == type }.map { |vec| vec.drop 1 } })
+      vec.last == type }.map { |vec| vec.drop 1 } })
 end
 
 for type in iris_class_types do
@@ -80,8 +80,18 @@ iris_classifier  = Classify.new iriss
 wine_classifier  = Classify.new wines
 heart_classifier = Classify.new hearts
 
-#puts wine_classifier.get_accuracy true
-puts iris_classifier.get_accuracy true
-puts heart_classifier.get_accuracy true
+puts wine_classifier.get_accuracy true, wines[0][:samples].sample().size - 1
+puts iris_classifier.get_accuracy true, iriss[0][:samples].sample().size - 1
+puts heart_classifier.get_accuracy true, hearts[0][:samples].sample().size - 1
 
-iris_classifier.create_decision_tree iriss.sample, iris_data_set
+for i in 0..iris_class_types.size - 1
+  iris_classifier.create_decision_tree iriss[i], iris_data_set
+end
+
+for i in 0..wine_class_types.size - 1
+  wine_classifier.create_decision_tree wines[i], wine_data_set
+end
+
+for i in 0..heart_class_types.size - 1
+  heart_classifier.create_decision_tree hearts[i], heart_data_set
+end

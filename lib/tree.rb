@@ -66,7 +66,6 @@ class Tree
     #create the maximum spaning tree
     #  negate all the weights, run kruskals' algo
     mst = kruskal
-
     for node in @features do
       node.adj_list.select! { |edge| mst.include? edge }
     end

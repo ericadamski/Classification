@@ -79,17 +79,15 @@ class Classify
     end
   end
 
-  def infer_dependence_tree (_class)
+  def infer_dependence_tree (_class, size)
     # take the first node.
     # let its position in the features vecture be denoted by 0
     # select the next node, its position is called 0 + 1
     # take count the occurences of 1's in both the 0th and 0 + 1th places
     #  to get p(x,y) individually, p(x) is count of 0 and p(y) is 0 + 1
-    tree = Tree.new _class[:samples].first().size
+    tree = Tree.new size
 
     copy = tree.features.slice(0, tree.features.size)
-
-    x, y = 0
 
     while copy.any?
       first = copy.pop
@@ -101,9 +99,6 @@ class Classify
     end
 
     mst = tree.get_maximum_spanning_tree
-
-    mst_vertices = (mst.map { |edge| edge.from } +
-      mst.map { |edge| edge.to }).uniq
 
     set_parents mst, tree.features.first
 
@@ -131,25 +126,25 @@ class Classify
     py  = py.to_f/size
     pxy = pxy.to_f/size
 
-    val = (pxy * (Math.log(pxy/(px*py))))
+    val = (pxy * (Math.log(pxy/(px*py), 2)))
     val.nan? ? -1200000 : val
   end
 
   def get_probability (pos, _class)
     sum = 0
     for vector in _class[:trainning_data][@trainning_index] do
-        sum += vector[pos]
+      sum += vector[pos]
     end
-    sum = sum.to_f / _class[:trainning_data][@trainning_index].size
+    sum.to_f / _class[:trainning_data][@trainning_index].size
   end
 
-  def get_accuracy (dependent = false)
+  def get_accuracy (dependent = false, size = 10)
     results = Hash.new
     # Structure of Result
     # => { class.id => { count, precent } }
     if dependent
       @classes.map { |c|
-        infer_dependence_tree c
+        infer_dependence_tree c, size
 
         results[c[:type]] = { :count => 0, :percent => 0.0 }
       }
@@ -217,11 +212,12 @@ class Classify
     else
       val = 0
     end
-    puts "entropy = #{val.to_f}"
+    #puts "entropy = #{val.to_f}"
     val
   end
 
   def gain (_class, set, attribute)
+    #puts "#{set.empty?}"
     # entropy(set) - for every value attribute can take ( in our case 0-1 )
     # do Sv = { s in Set | the attribute in (set s) has value v }
     # (Sv/S * entropy(Sv))
@@ -238,8 +234,8 @@ class Classify
     g = set_entropy - ( ((zero_set.size/set.size) * zero_set_entropy) +
       ((one_set.size/set.size) * one_set_entropy) )
 
-    puts "Gain : #{g.to_f}"
-    g.to_f
+    #puts "Gain : #{g.to_f}"
+    g.to_f().nan? ? 0 : g.to_f
   end
 
   def create_decision_tree (_class, set)
@@ -258,23 +254,28 @@ class Classify
       dt.add_node node
     end
 
-    dt.output "/../output/dt_#{_class[:type].to_s}.png"
-    
+    dt.output "/../output/dt_#{_class[:type].to_s}_#{rand}.png"
+
     dt
   end
 
   def get_dtree (_class, set, attributes, parent)
+    #return [] if _class.nil?
     nodes = []
 
-    if attributes.empty?
+    if attributes.empty? or set.empty?
       # if totally pos YES otherwise NO
-      pos = set.select { |vec| vec.last == _class[:type] }.size
-      neg = set.select { |vec| vec.last != _class[:type] }.size
-
-      if pos == 0
-        nodes.push Node.new 'YES', false, parent
-      else
+      if set.empty?
         nodes.push Node.new 'NO', false, parent
+      else
+        pos = set.select { |vec| vec.last == _class[:type] }.size
+        neg = set.select { |vec| vec.last != _class[:type] }.size
+
+        if pos == 0
+          nodes.push Node.new 'YES', false, parent
+        else
+          nodes.push Node.new 'NO', false, parent
+        end
       end
     else
       for attribute in attributes do
